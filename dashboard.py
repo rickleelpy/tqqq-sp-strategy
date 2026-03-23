@@ -53,12 +53,12 @@ def get_options_chain():
     """获取期权链"""
     ticker = yf.Ticker("TQQQ")
     
-    # 找下周五
+    # 找下周五（下周而不是本周）
     today = datetime.now()
-    days_until_friday = (4 - today.weekday() + 7) % 7
-    if days_until_friday == 0:
-        days_until_friday = 7
-    next_friday = today + timedelta(days=days_until_friday)
+    # 计算到本周五的天数
+    days_until_this_friday = (4 - today.weekday() + 7) % 7
+    # 统一使用下周周五 = 本周周五 + 7天
+    next_friday = today + timedelta(days=days_until_this_friday + 7)
     expiry = next_friday.strftime("%Y-%m-%d")
     
     try:
