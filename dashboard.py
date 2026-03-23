@@ -84,14 +84,18 @@ def get_options_chain():
     next_friday = today + timedelta(days=days_until_this_friday + 7)
     expiry = next_friday.strftime("%Y-%m-%d")
     
-    try:
-        chain = ticker.option_chain(expiry)
-        puts = chain.puts
-        if puts is None or len(puts) == 0:
-            return None, expiry
-        return puts.to_dict('records'), expiry
-    except:
-        return None, expiry
+    # 尝试获取期权数据，如果失败则尝试其他到期日
+    for days_add in [7, 14, 21, 0]:  # 优先尝试下周，然后依次往后
+        test_expiry = (today + timedelta(days=days_until_this_friday + days_add)).strftime("%Y-%m-%d")
+        try:
+            chain = ticker.option_chain(test_expiry)
+            puts = chain.puts
+            if puts is not None and len(puts) > 0:
+                return puts.to_dict('records'), test_expiry
+        except:
+            continue
+    
+    return None, expiry
 
 
 def filter_sp_options(puts, current_price):
