@@ -76,26 +76,20 @@ def get_options_chain():
     """获取期权链"""
     ticker = yf.Ticker("TQQQ")
     
-    # 找下周五（下周而不是本周）
+    # 只获取下周五（不是本周五）
     today = datetime.now()
-    # 计算到本周五的天数
     days_until_this_friday = (4 - today.weekday() + 7) % 7
-    # 统一使用下周周五 = 本周周五 + 7天
     next_friday = today + timedelta(days=days_until_this_friday + 7)
     expiry = next_friday.strftime("%Y-%m-%d")
     
-    # 尝试获取期权数据，如果失败则尝试其他到期日
-    for days_add in [7, 14, 21, 0]:  # 优先尝试下周，然后依次往后
-        test_expiry = (today + timedelta(days=days_until_this_friday + days_add)).strftime("%Y-%m-%d")
-        try:
-            chain = ticker.option_chain(test_expiry)
-            puts = chain.puts
-            if puts is not None and len(puts) > 0:
-                return puts.to_dict('records'), test_expiry
-        except:
-            continue
-    
-    return None, expiry
+    try:
+        chain = ticker.option_chain(expiry)
+        puts = chain.puts
+        if puts is None or len(puts) == 0:
+            return None, expiry
+        return puts.to_dict('records'), expiry
+    except:
+        return None, expiry
 
 
 def filter_sp_options(puts, current_price):
