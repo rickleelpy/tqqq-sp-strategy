@@ -8,6 +8,7 @@ import yfinance as yf
 from datetime import datetime, timedelta
 import pandas as pd
 import time
+import pytz
 import config
 
 # ==================== 页面配置 ====================
@@ -37,6 +38,28 @@ st.markdown("""
     }
 </style>
 """, unsafe_allow_html=True)
+
+
+# ==================== 工具函数 ====================
+def is_us_market_open():
+    """检查美股是否在交易时间（9:30-16:00 ET）"""
+    et_tz = pytz.timezone('America/New_York')
+    now_et = datetime.now(et_tz)
+    
+    # 检查是否在交易时间内（周一到周五，9:30-16:00）
+    if now_et.weekday() >= 5:  # 周六周日
+        return False
+    
+    market_open = now_et.replace(hour=9, minute=30, second=0, microsecond=0)
+    market_close = now_et.replace(hour=16, minute=0, second=0, microsecond=0)
+    
+    return market_open <= now_et <= market_close
+
+
+def get_beijing_time():
+    """获取北京时间"""
+    beijing_tz = pytz.timezone('Asia/Shanghai')
+    return datetime.now(beijing_tz)
 
 
 # ==================== 数据获取 ====================
@@ -133,7 +156,12 @@ with st.sidebar:
     st.write(f"**目标到期:** 下周五")
     
     st.divider()
-    st.write("🕐 最后更新:", datetime.now().strftime("%H:%M:%S"))
+    # 判断是否在美股交易时间
+    market_open = is_us_market_open()
+    refresh_interval = 900 if market_open else 300  # 交易时间15分钟，非交易时间5分钟
+    
+    st.write("🕐 最后更新 (北京时间):", get_beijing_time().strftime("%Y-%m-%d %H:%M:%S"))
+    st.write(f"{'🔥' if market_open else '💤'} 美股交易时间: {'是' if market_open else '否'} (刷新间隔: {refresh_interval//60}分钟)")
     
     # 刷新按钮
     if st.button("🔄 立即刷新"):
@@ -220,10 +248,12 @@ else:
 
 # ==================== 自动刷新 ====================
 st.markdown("---")
-st.markdown(f"*📌 每5分钟自动刷新 | 最后更新: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}*")
+st.markdown(f"*📌 自动刷新 | 最后更新 (北京时间): {get_beijing_time().strftime('%Y-%m-%d %H:%M:%S')}*")
 
-# 自动刷新脚本
-refresh_code = """
-<meta http-equiv="refresh" content="300">
-"""
-st.markdown(refresh_code, unsafe_allow_html=True)
+# 动态刷新间隔
+refresh_interval = 900 if is_us_market_open() else 300
+st.markdown(f"<meta http-equiv=\"refresh\" content=\"{refresh_interval}\">", unsafe_allow_html=True)
+
+# ==================== 通知说明 ====================
+st.markdown("---")
+st.info("📲 **通知功能**：Streamlit Cloud 无法主动推送通知。如需微信/飞书通知，需部署独立监控服务。")

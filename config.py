@@ -12,7 +12,7 @@ MAX_WEEKLY_LOSS = 0.05       # 每周最大亏损比例 (5%)
 MAX_WEEKLY_LOSS_AMOUNT = CAPITAL * MAX_WEEKLY_LOSS  # $1,250
 
 # ==================== 筛选参数 ====================
-STRIKE_DISCOUNT = 0.20       # 行权价低于现价比例 (20%)
+STRIKE_DISCOUNT = 0.15       # 行权价低于现价比例 (15%)
 EXPIRY_DAY = "FRIDAY"        # 到期日 (每周五)
 MIN_PREMIUM = 50             # 最小权利金 ($)
 MIN_DELTA = 0.10             # 最小 Delta 绝对值
